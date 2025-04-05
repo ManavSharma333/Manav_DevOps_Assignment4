@@ -43,8 +43,9 @@ steps:
   inputs:
     command: push
     packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
-    nuGetFeedType: 'azureFeed'
-    feedPublishUrl: $(feedUrl)
+    nuGetFeedType: 'internal'
+    publishVstsFeed: 'assignment04'  # Use the feed name or feed GUID
+
 
 # Step 6 (Optional): Commit YAML file to GitHub (you can remove this if not needed)
 - script: |
