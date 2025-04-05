@@ -2,54 +2,54 @@ trigger:
 - master
 
 pool:
-  name: Default  # Your self-hosted agent pool
+  name: Default
 
 variables:
   buildConfiguration: 'Release'
-  feedName: 'MyNugetFeed'
-  feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/MyNugetFeed/nuget/v3/index.json'
+  feedName: 'MyNugetFeed'  # Must match exactly
 
 steps:
-# Step 1: Authenticate with Azure Artifacts (CRITICAL)
+# 1. Authentication (MUST come first)
 - task: NuGetAuthenticate@1
-  displayName: 'Authenticate NuGet Feed'
+  displayName: 'Authenticate NuGet'
 
-# Step 2: Restore packages using .NET Core CLI (better for SDK-style projects)
+# 2. Restore
 - task: DotNetCoreCLI@2
-  displayName: 'Restore NuGet Packages'
+  displayName: 'Restore Packages'
   inputs:
-    command: 'restore'
+    command: restore
     projects: '**/*.csproj'
 
-# Step 3: Build the project
+# 3. Build
 - task: DotNetCoreCLI@2
-  displayName: 'Build Project'
+  displayName: 'Build'
   inputs:
-    command: 'build'
+    command: build
     projects: 'ShowCase/ShowCase.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
-# Step 4: Create NuGet package
+# 4. Pack
 - task: DotNetCoreCLI@2
-  displayName: 'Create NuGet Package'
+  displayName: 'Create Package'
   inputs:
-    command: 'pack'
+    command: pack
     packagesToPack: 'ShowCase/ShowCase.csproj'
     configuration: '$(buildConfiguration)'
     outputDir: '$(Build.ArtifactStagingDirectory)/nupkg'
 
-# Step 5: Push to Azure Artifacts
+# 5. Push (Updated)
 - task: NuGetCommand@2
   displayName: 'Push to Azure Artifacts'
   inputs:
-    command: 'push'
+    command: push
     packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: '$(feedName)'
+    versioningScheme: 'off'
 
-# (Optional) Step 6: Publish build artifacts
+# 6. Optional: Publish artifacts
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish Build Artifacts'
+  displayName: 'Publish Artifacts'
   inputs:
     pathtoPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: 'drop'
