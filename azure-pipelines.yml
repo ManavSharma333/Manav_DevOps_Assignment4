@@ -5,8 +5,8 @@ pool:
   name: Default  # Using your self-hosted agent pool
 
 variables:
-  feedName: 'assignment04'
-  feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/assignment04/nuget/v3/index.json'
+  feedName: 'MyNugetFeed'  # Use the correct feed name
+  feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/MyNugetFeed/nuget/v3/index.json'
 
 steps:
 # Step 1: Install NuGet (in case any restore is needed)
@@ -44,12 +44,12 @@ steps:
     command: push
     packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
     nuGetFeedType: 'internal'
-    publishVstsFeed: 'assignment04'
+    publishVstsFeed: '$(feedName)'  # Use the updated feed name here
 
 
 # Step 6 (Optional): Commit YAML file to GitHub (you can remove this if not needed)
 - script: |
-    git add .
-    git commit -m "Update Azure Pipeline YAML"
+    git add . 
+    git commit -m "Update Azure Pipeline YAML" 
     git push origin master
   displayName: 'Push YAML File to GitHub'
