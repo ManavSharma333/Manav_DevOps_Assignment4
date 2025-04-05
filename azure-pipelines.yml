@@ -6,7 +6,7 @@ pool:
 
 variables:
   feedName: 'assignment04'
-  feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/MyNugetFeed/nuget/v3/index.json'
+  feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/assignment04/nuget/v3/index.json'
 
 steps:
 # Step 1: Install NuGet (in case any restore is needed)
@@ -44,7 +44,7 @@ steps:
     command: push
     packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
     nuGetFeedType: 'internal'
-    publishVstsFeed: 'MyNugetFeed'
+    publishVstsFeed: 'assignment04'
 
 
 # Step 6 (Optional): Commit YAML file to GitHub (you can remove this if not needed)
