@@ -1,0 +1,61 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  name: Default  # Using the self-hosted agent pool, "Default"
+
+variables:
+  # Specify your feed details
+  feedName: 'assignment04'  # Your Azure Artifacts feed name
+  feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/assignment04/nuget/v3/index.json'
+
+steps:
+
+# Step 1: Restore NuGet packages
+- task: NuGetToolInstaller@1
+  displayName: 'Install NuGet'
+  
+- task: NuGetCommand@2
+  inputs:
+    command: restore
+    restoreSolution: 'Manav_DevOps_Assignment4.sln'  # Adjust this to your solution file if necessary
+  displayName: 'Restore NuGet Packages'
+
+# Step 2: Build the project
+- task: MSBuild@1
+  inputs:
+    solutionFile: 'Manav_DevOps_Assignment4.sln'  # Adjust this to your solution file if necessary
+    msbuildArguments: '/p:Configuration=Release'
+  displayName: 'Build Project'
+
+# Step 3: Pack the NuGet package
+- task: NuGetCommand@2
+  inputs:
+    command: pack
+    packagesToPack: 'ShowCase/ShowCase.csproj'  # Adjust if necessary
+    versioningScheme: 'off'
+    outputDir: '$(Build.ArtifactStagingDirectory)/nupkg'
+  displayName: 'Pack NuGet Package'
+
+# Step 4: Push the NuGet package to Azure Artifacts Feed
+- task: NuGetCommand@2
+  inputs:
+    command: push
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
+    nuGetFeedType: 'external'
+    publishFeedCredentials: $(System.DefaultWorkingDirectory)/_temp/nuget.config
+    feedPublishUrl: $(feedUrl)
+  displayName: 'Push NuGet Package to Azure Artifacts'
+
+# Step 5: (Optional) Store YAML file in GitHub repository
+# This can be tracked as a part of version control
+- script: |
+    git add .
+    git commit -m "Add Azure Pipeline YAML"
+    git push origin master
+  displayName: 'Push YAML File to GitHub'
