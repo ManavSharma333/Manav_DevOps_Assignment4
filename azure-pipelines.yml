@@ -12,7 +12,7 @@ pool:
 variables:
   # Specify your feed details
   feedName: 'assignment04'  # Your Azure Artifacts feed name
-  feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/assignment04/nuget/v3/index.json'
+  feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/MyNugetFeed/nuget/v3/index.json'
 
 steps:
 
@@ -47,10 +47,10 @@ steps:
   inputs:
     command: push
     packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
-    nuGetFeedType: 'external'
-    publishFeedCredentials: $(System.DefaultWorkingDirectory)/_temp/nuget.config
-    feedPublishUrl: $(feedUrl)
+    nuGetFeedType: 'azureFeed'  # This indicates you're using Azure Artifacts
+    feedPublishUrl: $(feedUrl)  # The URL of your Azure Artifacts feed
   displayName: 'Push NuGet Package to Azure Artifacts'
+
 
 # Step 5: (Optional) Store YAML file in GitHub repository
 # This can be tracked as a part of version control
