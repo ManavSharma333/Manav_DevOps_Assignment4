@@ -51,11 +51,10 @@ steps:
     feedPublishUrl: $(feedUrl)  # The URL of your Azure Artifacts feed
   displayName: 'Push NuGet Package to Azure Artifacts'
 
-
 # Step 5: (Optional) Store YAML file in GitHub repository
 # This can be tracked as a part of version control
 - script: |
-    git add .
+    git add . 
     git commit -m "Add Azure Pipeline YAML"
     git push origin master
   displayName: 'Push YAML File to GitHub'
