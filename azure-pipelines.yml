@@ -2,25 +2,31 @@ trigger:
 - master
 
 pool:
-  name: Default  # Using your self-hosted agent pool
+  name: Default
 
 variables:
-  feedName: 'MyNugetFeed'  # Use the correct feed name
+  feedName: 'MyNugetFeed'
   feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/MyNugetFeed/nuget/v3/index.json'
 
 steps:
-# Step 1: Install NuGet (in case any restore is needed)
+# Step 0: Authenticate with Azure Artifacts (CRITICAL ADDITION)
+- task: NuGetAuthenticate@1
+  displayName: 'Authenticate with Azure Artifacts'
+
+# Step 1: Install NuGet
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet'
 
-# Step 2: Restore dependencies (optional for SDK projects, but safe)
+# Step 2: Restore dependencies
 - task: NuGetCommand@2
   displayName: 'Restore NuGet Packages'
   inputs:
     command: restore
     restoreSolution: 'Manav_DevOps_Assignment4.sln'
+    feedsToUse: 'config'
+    nugetConfigPath: 'nuget.config'  # Point to your config file
 
-# Step 3: Build the project using dotnet
+# Step 3: Build
 - task: DotNetCoreCLI@2
   displayName: 'Build Project'
   inputs:
@@ -28,28 +34,20 @@ steps:
     projects: 'ShowCase/ShowCase.csproj'
     arguments: '--configuration Release'
 
-# Step 4: Pack using dotnet (works with SDK-style csproj)
+# Step 4: Pack
 - task: DotNetCoreCLI@2
-  displayName: 'Pack NuGet Package using dotnet CLI'
+  displayName: 'Pack NuGet Package'
   inputs:
     command: 'pack'
     packagesToPack: 'ShowCase/ShowCase.csproj'
     configuration: 'Release'
     outputDir: '$(Build.ArtifactStagingDirectory)/nupkg'
 
-# Step 5: Push the package to Azure Artifacts
+# Step 5: Push (now properly authenticated)
 - task: NuGetCommand@2
-  displayName: 'Push NuGet Package to Azure Artifacts'
+  displayName: 'Push to Azure Artifacts'
   inputs:
     command: push
     packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
     nuGetFeedType: 'internal'
-    publishVstsFeed: '$(feedName)'  # Use the updated feed name here
-
-
-# Step 6 (Optional): Commit YAML file to GitHub (you can remove this if not needed)
-- script: |
-    git add . 
-    git commit -m "Update Azure Pipeline YAML" 
-    git push origin master
-  displayName: 'Push YAML File to GitHub'
+    publishVstsFeed: '$(feedName)'
