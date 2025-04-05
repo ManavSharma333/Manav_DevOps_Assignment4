@@ -2,52 +2,54 @@ trigger:
 - master
 
 pool:
-  name: Default
+  name: Default  # Your self-hosted agent pool
 
 variables:
+  buildConfiguration: 'Release'
   feedName: 'MyNugetFeed'
   feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/MyNugetFeed/nuget/v3/index.json'
 
 steps:
-# Step 0: Authenticate with Azure Artifacts (CRITICAL ADDITION)
+# Step 1: Authenticate with Azure Artifacts (CRITICAL)
 - task: NuGetAuthenticate@1
-  displayName: 'Authenticate with Azure Artifacts'
+  displayName: 'Authenticate NuGet Feed'
 
-# Step 1: Install NuGet
-- task: NuGetToolInstaller@1
-  displayName: 'Install NuGet'
-
-# Step 2: Restore dependencies
-- task: NuGetCommand@2
+# Step 2: Restore packages using .NET Core CLI (better for SDK-style projects)
+- task: DotNetCoreCLI@2
   displayName: 'Restore NuGet Packages'
   inputs:
-    command: restore
-    restoreSolution: 'Manav_DevOps_Assignment4.sln'
-    feedsToUse: 'config'
-    nugetConfigPath: 'nuget.config'  # Point to your config file
+    command: 'restore'
+    projects: '**/*.csproj'
 
-# Step 3: Build
+# Step 3: Build the project
 - task: DotNetCoreCLI@2
   displayName: 'Build Project'
   inputs:
     command: 'build'
     projects: 'ShowCase/ShowCase.csproj'
-    arguments: '--configuration Release'
+    arguments: '--configuration $(buildConfiguration)'
 
-# Step 4: Pack
+# Step 4: Create NuGet package
 - task: DotNetCoreCLI@2
-  displayName: 'Pack NuGet Package'
+  displayName: 'Create NuGet Package'
   inputs:
     command: 'pack'
     packagesToPack: 'ShowCase/ShowCase.csproj'
-    configuration: 'Release'
+    configuration: '$(buildConfiguration)'
     outputDir: '$(Build.ArtifactStagingDirectory)/nupkg'
 
-# Step 5: Push (now properly authenticated)
+# Step 5: Push to Azure Artifacts
 - task: NuGetCommand@2
   displayName: 'Push to Azure Artifacts'
   inputs:
-    command: push
+    command: 'push'
     packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: '$(feedName)'
+
+# (Optional) Step 6: Publish build artifacts
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Build Artifacts'
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'drop'
