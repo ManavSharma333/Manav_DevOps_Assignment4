@@ -5,39 +5,45 @@ pool:
   name: Default  # Using the self-hosted agent pool, "Default"
 
 variables:
-  feedName: 'assignment04'
+  # Specify your feed details
+  feedName: 'assignment04'  # Your Azure Artifacts feed name
   feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/MyNugetFeed/nuget/v3/index.json'
 
 steps:
 
-# Step 1: Install NuGet tool
+# Step 1: Install NuGet
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet'
 
-# Step 2: Restore NuGet packages
+# Step 2: Restore NuGet Packages
 - task: NuGetCommand@2
   inputs:
     command: restore
     restoreSolution: 'Manav_DevOps_Assignment4.sln'
   displayName: 'Restore NuGet Packages'
 
-# Step 3: Build the project and output to a known location
+# Step 3: Build the project in Release mode
 - task: MSBuild@1
   inputs:
     solutionFile: 'Manav_DevOps_Assignment4.sln'
-    msbuildArguments: '/p:Configuration=Release /p:OutputPath=$(Build.ArtifactStagingDirectory)/bin'
+    msbuildArguments: '/p:Configuration=Release'
   displayName: 'Build Project'
 
-# Step 4: Pack the NuGet package
+# Optional: Debug - List build output
+- script: dir ShowCase\bin\Release\net8.0
+  displayName: 'Check DLL Output in bin folder'
+
+# Step 4: Pack the NuGet Package using Release output
 - task: NuGetCommand@2
   inputs:
     command: pack
     packagesToPack: 'ShowCase/ShowCase.csproj'
     versioningScheme: 'off'
     outputDir: '$(Build.ArtifactStagingDirectory)/nupkg'
+    buildProperties: 'Configuration=Release'
   displayName: 'Pack NuGet Package'
 
-# Step 5: Push the NuGet package to Azure Artifacts Feed
+# Step 5: Push the NuGet Package to Azure Artifacts
 - task: NuGetCommand@2
   inputs:
     command: push
