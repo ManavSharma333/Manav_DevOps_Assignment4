@@ -44,7 +44,7 @@ steps:
     command: push
     packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
     nuGetFeedType: 'internal'
-    publishVstsFeed: 'assignment04'  # Use the feed name or feed GUID
+    publishVstsFeed: 'MyNugetFeed'
 
 
 # Step 6 (Optional): Commit YAML file to GitHub (you can remove this if not needed)
