@@ -2,52 +2,53 @@ trigger:
 - master
 
 pool:
-  name: Default  # Using the self-hosted agent pool, "Default"
+  name: Default  # Using your self-hosted agent pool
 
 variables:
-  # Specify your feed details
-  feedName: 'assignment04'  # Your Azure Artifacts feed name
+  feedName: 'assignment04'
   feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/MyNugetFeed/nuget/v3/index.json'
 
 steps:
-
-# Step 1: Install NuGet
+# Step 1: Install NuGet (in case any restore is needed)
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet'
 
-# Step 2: Restore NuGet Packages
+# Step 2: Restore dependencies (optional for SDK projects, but safe)
 - task: NuGetCommand@2
+  displayName: 'Restore NuGet Packages'
   inputs:
     command: restore
     restoreSolution: 'Manav_DevOps_Assignment4.sln'
-  displayName: 'Restore NuGet Packages'
 
-# Step 3: Build the project in Release mode
-- task: MSBuild@1
-  inputs:
-    solutionFile: 'Manav_DevOps_Assignment4.sln'
-    msbuildArguments: '/p:Configuration=Release'
+# Step 3: Build the project using dotnet
+- task: DotNetCoreCLI@2
   displayName: 'Build Project'
-
-# Optional: Debug - List build output
-- script: dir ShowCase\bin\Release\net8.0
-  displayName: 'Check DLL Output in bin folder'
-
-# Step 4: Pack the NuGet Package using Release output
-- task: NuGetCommand@2
   inputs:
-    command: pack
-    packagesToPack: 'ShowCase/ShowCase.csproj'
-    versioningScheme: 'off'
-    outputDir: '$(Build.ArtifactStagingDirectory)/nupkg'
-    buildProperties: 'Configuration=Release'
-  displayName: 'Pack NuGet Package'
+    command: 'build'
+    projects: 'ShowCase/ShowCase.csproj'
+    arguments: '--configuration Release'
 
-# Step 5: Push the NuGet Package to Azure Artifacts
+# Step 4: Pack using dotnet (works with SDK-style csproj)
+- task: DotNetCoreCLI@2
+  displayName: 'Pack NuGet Package using dotnet CLI'
+  inputs:
+    command: 'pack'
+    packagesToPack: 'ShowCase/ShowCase.csproj'
+    configuration: 'Release'
+    outputDir: '$(Build.ArtifactStagingDirectory)/nupkg'
+
+# Step 5: Push the package to Azure Artifacts
 - task: NuGetCommand@2
+  displayName: 'Push NuGet Package to Azure Artifacts'
   inputs:
     command: push
     packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
     nuGetFeedType: 'azureFeed'
     feedPublishUrl: $(feedUrl)
-  displayName: 'Push NuGet Package to Azure Artifacts'
+
+# Step 6 (Optional): Commit YAML file to GitHub (you can remove this if not needed)
+- script: |
+    git add .
+    git commit -m "Update Azure Pipeline YAML"
+    git push origin master
+  displayName: 'Push YAML File to GitHub'
