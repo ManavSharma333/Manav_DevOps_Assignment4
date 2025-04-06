@@ -1,46 +1,32 @@
 trigger:
-- master
+- main
 
 pool:
-  name: Default
+  name: 'Default'  # Ensure this is your self-hosted agent pool name
 
 variables:
   buildConfiguration: 'Release'
-  feedName: 'MyNugetFeed'  # Must match exactly
+  version: '1.0.0'
 
 steps:
-# 1. Authentication (MUST come first)
-- task: NuGetAuthenticate@1
-  displayName: 'Authenticate NuGet'
-
-# 2. Restore
-- task: DotNetCoreCLI@2
-  displayName: 'Restore Packages'
+- task: UseDotNet@2
   inputs:
-    command: restore
-    projects: '**/*.csproj'
+    packageType: 'sdk'
+    version: '8.x.x'
 
-# 3. Build
-- task: DotNetCoreCLI@2
+- script: dotnet restore
+  displayName: 'Restore packages'
+
+- script: dotnet build --configuration $(buildConfiguration)
   displayName: 'Build'
-  inputs:
-    command: build
-    projects: 'ShowCase/ShowCase.csproj'
-    arguments: '--configuration $(buildConfiguration)'
 
-# 4. Pack
-- task: DotNetCoreCLI@2
-  displayName: 'Create Package'
-  inputs:
-    command: pack
-    packagesToPack: 'ShowCase/ShowCase.csproj'
-    configuration: '$(buildConfiguration)'
-    outputDir: '$(Build.ArtifactStagingDirectory)/nupkg'
+- script: dotnet pack --configuration $(buildConfiguration) /p:PackageVersion=$(version) -o $(Build.ArtifactStagingDirectory)
+  displayName: 'Pack NuGet'
 
+- task: NuGetAuthenticate@1
 
-# 6. Optional: Publish artifacts
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifacts'
+- task: NuGetCommand@2
   inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: 'drop'
+    command: push
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    publishVstsFeed: 'MyNugetFeed'
