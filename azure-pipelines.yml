@@ -37,15 +37,6 @@ steps:
     configuration: '$(buildConfiguration)'
     outputDir: '$(Build.ArtifactStagingDirectory)/nupkg'
 
-# 5. Push (Updated)
-- task: NuGetCommand@2
-  displayName: 'Push to Azure Artifacts'
-  inputs:
-    command: push
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
-    nuGetFeedType: 'internal'
-    publishVstsFeed: '$(feedName)'
-    versioningScheme: 'off'
 
 # 6. Optional: Publish artifacts
 - task: PublishBuildArtifacts@1
