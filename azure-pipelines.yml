@@ -1,32 +1,55 @@
 trigger:
-- main
+- master
 
 pool:
-  name: 'Default'  # Ensure this is your self-hosted agent pool name
+  name: Default  # Using your self-hosted agent pool
 
 variables:
-  buildConfiguration: 'Release'
-  version: '1.0.0'
+  feedName: 'MyNugetFeed'  # Use the correct feed name
+  feedUrl: 'https://pkgs.dev.azure.com/mshar246/Assignment04/_packaging/MyNugetFeed/nuget/v3/index.json'
 
 steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '8.x.x'
+# Step 1: Install NuGet (in case any restore is needed)
+- task: NuGetToolInstaller@1
+  displayName: 'Install NuGet'
 
-- script: dotnet restore
-  displayName: 'Restore packages'
-
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'Build'
-
-- script: dotnet pack --configuration $(buildConfiguration) /p:PackageVersion=$(version) -o $(Build.ArtifactStagingDirectory)
-  displayName: 'Pack NuGet'
-
-- task: NuGetAuthenticate@1
-
+# Step 2: Restore dependencies (optional for SDK projects, but safe)
 - task: NuGetCommand@2
+  displayName: 'Restore NuGet Packages'
+  inputs:
+    command: restore
+    restoreSolution: 'Manav_DevOps_Assignment4.sln'
+
+# Step 3: Build the project using dotnet
+- task: DotNetCoreCLI@2
+  displayName: 'Build Project'
+  inputs:
+    command: 'build'
+    projects: 'ShowCase/ShowCase.csproj'
+    arguments: '--configuration Release'
+
+# Step 4: Pack using dotnet (works with SDK-style csproj)
+- task: DotNetCoreCLI@2
+  displayName: 'Pack NuGet Package using dotnet CLI'
+  inputs:
+    command: 'pack'
+    packagesToPack: 'ShowCase/ShowCase.csproj'
+    configuration: 'Release'
+    outputDir: '$(Build.ArtifactStagingDirectory)/nupkg'
+
+# Step 5: Push the package to Azure Artifacts
+- task: NuGetCommand@2
+  displayName: 'Push NuGet Package to Azure Artifacts'
   inputs:
     command: push
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
-    publishVstsFeed: 'MyNugetFeed'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/nupkg/*.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: '$(feedName)'  # Use the updated feed name here
+
+
+# Step 6 (Optional): Commit YAML file to GitHub (you can remove this if not needed)
+- script: |
+    git add . 
+    git commit -m "Update Azure Pipeline YAML" 
+    git push origin master
+  displayName: 'Push YAML File to GitHub'
